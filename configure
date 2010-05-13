@@ -1,0 +1,87 @@
+#!/bin/sh
+## configure for PROJECT in /u/a1/berard_a
+##
+## Made by axel berardino
+## Login   <berard_a@epita.fr>
+##
+## Started on  Mon Oct 23 16:00:09 2006 axel berardino
+## Last update Wed Mar  7 02:11:25 2007 axel berardino
+##
+
+LOGIN=berard_a
+PROJ=mdr2008
+EXE=$PROJ
+
+flag_debug=0
+flag_efence=0
+flag_help=0
+
+for i in $@ ; do
+    case $1 in
+	--with-debug )
+	    flag_debug=1
+	    ;;
+	--with-efence )
+	    flag_efence=1
+	    ;;
+	--help )
+	    flag_help=1
+	    ;;
+	--with-debugmax )
+	    flag_debug=1
+	    flag_efence=1
+	    ;;
+	* )
+	    flag_help=1
+	    ;;
+    esac
+    shift 1
+done
+
+if [ $flag_help -ne 0 ]; then
+    echo "Usage:
+  --with-debug: Will add '-g' and remove '-DNDEBUG' in the CXXFLAGS.
+  --with-efence: Will link $PROJ with efence library.
+  --with-debugmax: Active '--with-debug' and '--with-efence'.
+  --help: show this usage."
+    exit 1
+fi
+if [ $flag_debug -ne 0 ]; then
+    DNDEBUG="-g3 -O0"
+else
+    DNDEBUG="-Werror -DNDEBUG -O3"
+fi
+if [ $flag_efence -ne 0 ]; then
+    EFENCE="-L/usr/pkg/lib -lefence"
+else
+    EFENCE=""
+fi
+
+OS=`uname -s`
+echo "OS=$OS" > Makefile.rules
+
+CXX=/usr/bin/g++
+CXX_GFILT=`pwd`/`dirname $0`/gfilt
+test -x $CXX_GFILT && CXX=$CXX_GFILT
+CXXFLAGS="-Wall -W -Wextra"
+LDFLAGS="-lsqlite3 -lboost_filesystem -lboost_regex -lboost_program_options"
+
+CXXFLAGS="$CXXFLAGS $DNDEBUG"
+LDFLAGS="$LDFLAGS $CXXFLAGS $EFENCE"
+echo "CXXFLAGS=$CXXFLAGS" >> Makefile.rules
+echo "LDFLAGS=$LDFLAGS" >> Makefile.rules
+echo "CXX=$CXX" >> Makefile.rules
+echo "PROJ=$PROJ" >> Makefile.rules
+echo "LOGIN=$LOGIN" >> Makefile.rules
+echo "EXE=$EXE" >> Makefile.rules
+
+# Display some information
+echo "Login:                $LOGIN"
+echo "Project name:         $PROJ"
+echo "Executable name:      $EXE"
+echo "Operating system:     $OS"
+echo "Compilation flags:    $CXXFLAGS"
+echo "Compilation linking:  $LDFLAGS"
+echo "Compilator:           $CXX"
+
+exit 0

@@ -1,0 +1,17 @@
+date(34/34/34-34/34/34) + date(> 45/45/45) date(< 45/45/45) myexpr + rere OR dedede AND (dedede OR dedede AND dede) - word + "Some expre + dede toto"
+
+Request := operation
+         | expression
+
+operation ::= (expression)
+            | expression 'OR' expression
+	    | expression 'AND' expression
+	    | expression '-' expression
+	    | expression '+' expression
+
+expression ::= word
+ 	     | listword
+	     | date
+
+listword ::= '"' word '"'
+	   | '"' word listword '"'

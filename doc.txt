@@ -1,0 +1,83 @@
+== Dependances ==
+libsqlite3-dev
+libboost-1_35
+gnu g++
+
+-lsqlite3
+
+boost::tokenizer
+boost::operations
+boost::filesystem
+boost::algorithm
+boost::string
+boost::regexp
+
+Crawler:
+  Not asked.
+
+== Structure ==
+
+Indexer
+  Invert index
+  Base sqlite :
+    Document:
+      Id Doc (U) | Filename | Type | Hash | Date | Length
+    Word:
+      Id Doc | Id Term | Weight | RealCount | StemCount | Score
+    Term:
+      Id Term (U) | Real | Stem
+
+Searcher
+  Cache all search, re-cache if indexer was relaunched.
+  Base sqlite:
+    Has to be reinitialized:
+      HasToBe (0 or 1)
+    Search:
+      Id Search (U) | Sentence | Id Result
+    Result:
+      Id Result | Id Doc | Rank
+  Eigen vector of Salton
+  ""
+  AND OR
+  Expression
+
+
+== Principe ==
+
+Indexer:
+
+Créer base sqlite si non existante.
+
+Parcourir tout le dossier et sous dossier pour mettre dans la base.
+
+Vérifiez si le fichier existe, si oui vérifiez que le hash est à jour.
+Si non à jour ou si non existant, alors récupérer le type de document, sa date,
+son hash et son nom, puis l'ajouter à la table "Document".
+
+Se souvenir de Id Doc, puis parser le fichier et à chaque term, vérifiez s'il
+existe dans la table "Term". Si existe, récupérer son Id Term. Sinon, en créer un
+nouveau, trouvez son stem, et mettre frequency à 0. Avec le Id Term, remplir
+une ligne de la table "Word" avec ce Id Term, puis remplir Weight (1 par défaut),
+et son nombre d'apparition à 1.
+
+Searcher:
+
+Refuser de chercher si non existance de la base sqlite.
+Vérifier que le has be reinitialized est à 0. Si à 1, on vide (trunc) tout les
+recherches mises en cache.
+
+On nettoie la requête, de manière à la rendre uniforme (dégage les espaces, ajout
+ou suppression de parenthèse).
+Pour un term donné, regarder dans Search, si la recherche n'a pas déjà été faite.
+Si oui, on donne directement le résultat.
+
+Si ce n'est pas le cas, alors récupère tout les documents matchant notre requête.
+On vérifie le type de requête. Pour des requêtes non guillemettés, on ne regarde
+que la base. Pour des recherches guillemettés, on coupe en token et on match
+avec une regexp tout les fichiers contenant les 2 terms.
+
+On utilise un mot et ensuite son stem pour avoir plus de cohérence.
+On utilise alors le poids pour déterminer l'ordre des documents.
+Cet ordre est alors inscrit dans la table "Result" que l'on lie à notre "Search".
+
+On affiche les resultats.
